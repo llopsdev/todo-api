@@ -1,6 +1,7 @@
 package com.llops.todo_api.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,10 +14,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.llops.todo_api.DTO.TaskRequest;
+import com.llops.todo_api.DTO.TaskResponse;
 import com.llops.todo_api.entity.Task;
 import com.llops.todo_api.enums.Priority;
 import com.llops.todo_api.enums.Status;
 import com.llops.todo_api.service.TaskService;
+
+import jakarta.validation.Valid;
 
 
 
@@ -30,29 +35,55 @@ public class TaskController {
 		this.taskService=taskService;
 	}
 	@PostMapping
-	public ResponseEntity<Task>createTask(@RequestBody Task task){
-		return ResponseEntity.status(201).body(taskService.create(task));
+	public ResponseEntity<TaskResponse>createTask(@RequestBody @Valid TaskRequest taskRequest){
+		Task task= toEntity(taskRequest);
+		Task taskCreated=taskService.create(task);
+		TaskResponse taskResponse= toResponse(taskCreated);
+		
+		return ResponseEntity.status(201).body(taskResponse);
 	}
 	@PutMapping("/{id}")
-	public ResponseEntity<Task>updateTask(@PathVariable Long id, @RequestBody Task task){
-		return ResponseEntity.status(200).body(taskService.update(id, task));
+	public ResponseEntity<TaskResponse>updateTask(@PathVariable Long id, @RequestBody @Valid TaskRequest taskRequest){
+		Task taskUpdated=taskService.update(id, toEntity(taskRequest));
+		TaskResponse taskResponse=toResponse(taskUpdated);		
+		
+			return ResponseEntity.status(200).body(taskResponse);
 	}
-	@GetMapping()
-	public ResponseEntity<List<Task>>findAll(){
-		return ResponseEntity.status(200).body(taskService.findAll());
-	}
+
 	@GetMapping("/{id}")
-	public ResponseEntity<Task>findById(@PathVariable Long id){
-		return ResponseEntity.status(200).body(taskService.findById(id));
+	public ResponseEntity<TaskResponse>findById(@PathVariable Long id){
+		TaskResponse taskResponse= toResponse(taskService.findById(id));
+		
+		return ResponseEntity.status(200).body(taskResponse);
 	}
 	@GetMapping
-	public ResponseEntity<List<Task>>findWithFilter(@RequestParam (required = false) Status status,@RequestParam (required = false) Priority priority){
-		return ResponseEntity.status(200).body(taskService.findWithFilter(status, priority));
+	public ResponseEntity<List<TaskResponse>>findWithFilter(@RequestParam (required = false) Status status,@RequestParam (required = false) Priority priority){
+		List<TaskResponse>taskList=taskService.findWithFilter(status, priority).stream().map(task ->toResponse(task)).collect(Collectors.toList());
+		
+		
+		return ResponseEntity.status(200).body(taskList);
 	}
 	
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void>delete(@PathVariable Long id){
 		taskService.delete(id);
 		return ResponseEntity.noContent().build();
+	}
+	
+	//CONVERTE REQUEST PARA ENTIDADE
+	private Task toEntity(TaskRequest taskRequest) {
+		Task task = new Task();
+		task.setTitle(taskRequest.getTitle());
+		task.setDescription(taskRequest.getDescription());
+		task.setDueDate(taskRequest.getDueDate());
+		task.setStatus(taskRequest.getStatus());
+		task.setPriority(taskRequest.getPriority());
+		return task;
+}
+	//CONVERTE A ENTIDADE PARA RESPONSE
+	private TaskResponse toResponse(Task task) {
+		TaskResponse taskResponse = new TaskResponse(task.getId(),task.getTitle(),task.getStatus(),task.getPriority(),task.getDescription(),task.getDueDate(),task.getCreatedAt());
+		return taskResponse;
+		
 	}
 }

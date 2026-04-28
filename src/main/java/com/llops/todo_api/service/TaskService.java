@@ -84,4 +84,18 @@ public class TaskService {
 		return taskRepository.save(task);
 	}
 
+	public List<Task> findWithFilter(Status status, Priority priority) {
+		if (status != null && priority != null) {
+			return taskRepository.findByStatusAndPriority(status, priority);
+		} else 
+			if (status != null) {
+				return taskRepository.findByStatus(status);
+		} else
+			if (priority != null) {
+				return taskRepository.findByPriority(priority);
+		} else {
+			return taskRepository.findAll();
+		}
+
+	}
 }

@@ -10,9 +10,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.llops.todo_api.entity.Task;
+import com.llops.todo_api.enums.Priority;
+import com.llops.todo_api.enums.Status;
 import com.llops.todo_api.service.TaskService;
 
 
@@ -34,13 +37,17 @@ public class TaskController {
 	public ResponseEntity<Task>updateTask(@PathVariable Long id, @RequestBody Task task){
 		return ResponseEntity.status(200).body(taskService.update(id, task));
 	}
-	@GetMapping
+	@GetMapping()
 	public ResponseEntity<List<Task>>findAll(){
 		return ResponseEntity.status(200).body(taskService.findAll());
 	}
 	@GetMapping("/{id}")
 	public ResponseEntity<Task>findById(@PathVariable Long id){
 		return ResponseEntity.status(200).body(taskService.findById(id));
+	}
+	@GetMapping
+	public ResponseEntity<List<Task>>findWithFilter(@RequestParam (required = false) Status status,@RequestParam (required = false) Priority priority){
+		return ResponseEntity.status(200).body(taskService.findWithFilter(status, priority));
 	}
 	
 	@DeleteMapping("/{id}")
